@@ -1,0 +1,600 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9C642E542E747DA300020D81 /* ID3TagEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 9C642E532E747DA300020D81 /* ID3TagEditor */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9CBE85C12E50BD3E008598EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CBE85A72E50BD3C008598EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CBE85AE2E50BD3C008598EE;
+			remoteInfo = WAUX;
+		};
+		9CBE85CB2E50BD3E008598EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CBE85A72E50BD3C008598EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CBE85AE2E50BD3C008598EE;
+			remoteInfo = WAUX;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		9CBE85AF2E50BD3C008598EE /* WAUX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = WAUX.app; path = "Vaux Cue Sheet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CBE85C02E50BD3E008598EE /* WAUXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WAUXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CBE85CA2E50BD3E008598EE /* WAUXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WAUXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9CBE85B12E50BD3C008598EE /* WAUX */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WAUX;
+			sourceTree = "<group>";
+		};
+		9CBE85C32E50BD3E008598EE /* WAUXTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WAUXTests;
+			sourceTree = "<group>";
+		};
+		9CBE85CD2E50BD3E008598EE /* WAUXUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WAUXUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9CBE85AC2E50BD3C008598EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9C642E542E747DA300020D81 /* ID3TagEditor in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85BD2E50BD3E008598EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85C72E50BD3E008598EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9CBE85A62E50BD3C008598EE = {
+			isa = PBXGroup;
+			children = (
+				9CBE85B12E50BD3C008598EE /* WAUX */,
+				9CBE85C32E50BD3E008598EE /* WAUXTests */,
+				9CBE85CD2E50BD3E008598EE /* WAUXUITests */,
+				9CBE85B02E50BD3C008598EE /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9CBE85B02E50BD3C008598EE /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CBE85AF2E50BD3C008598EE /* WAUX.app */,
+				9CBE85C02E50BD3E008598EE /* WAUXTests.xctest */,
+				9CBE85CA2E50BD3E008598EE /* WAUXUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9CBE85AE2E50BD3C008598EE /* Vaux Cue Sheet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CBE85D42E50BD3E008598EE /* Build configuration list for PBXNativeTarget "Vaux Cue Sheet" */;
+			buildPhases = (
+				9CBE85AB2E50BD3C008598EE /* Sources */,
+				9CBE85AC2E50BD3C008598EE /* Frameworks */,
+				9CBE85AD2E50BD3C008598EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9CBE85B12E50BD3C008598EE /* WAUX */,
+			);
+			name = "Vaux Cue Sheet";
+			packageProductDependencies = (
+				9C642E532E747DA300020D81 /* ID3TagEditor */,
+			);
+			productName = "Vaux Cue Sheet";
+			productReference = 9CBE85AF2E50BD3C008598EE /* WAUX.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9CBE85BF2E50BD3E008598EE /* WAUXTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CBE85D72E50BD3E008598EE /* Build configuration list for PBXNativeTarget "WAUXTests" */;
+			buildPhases = (
+				9CBE85BC2E50BD3E008598EE /* Sources */,
+				9CBE85BD2E50BD3E008598EE /* Frameworks */,
+				9CBE85BE2E50BD3E008598EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CBE85C22E50BD3E008598EE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9CBE85C32E50BD3E008598EE /* WAUXTests */,
+			);
+			name = WAUXTests;
+			packageProductDependencies = (
+			);
+			productName = WAUXTests;
+			productReference = 9CBE85C02E50BD3E008598EE /* WAUXTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9CBE85C92E50BD3E008598EE /* WAUXUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CBE85DA2E50BD3E008598EE /* Build configuration list for PBXNativeTarget "WAUXUITests" */;
+			buildPhases = (
+				9CBE85C62E50BD3E008598EE /* Sources */,
+				9CBE85C72E50BD3E008598EE /* Frameworks */,
+				9CBE85C82E50BD3E008598EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CBE85CC2E50BD3E008598EE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9CBE85CD2E50BD3E008598EE /* WAUXUITests */,
+			);
+			name = WAUXUITests;
+			packageProductDependencies = (
+			);
+			productName = WAUXUITests;
+			productReference = 9CBE85CA2E50BD3E008598EE /* WAUXUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9CBE85A72E50BD3C008598EE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					9CBE85AE2E50BD3C008598EE = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					9CBE85BF2E50BD3E008598EE = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 9CBE85AE2E50BD3C008598EE;
+					};
+					9CBE85C92E50BD3E008598EE = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 9CBE85AE2E50BD3C008598EE;
+					};
+				};
+			};
+			buildConfigurationList = 9CBE85AA2E50BD3C008598EE /* Build configuration list for PBXProject "WAUX" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9CBE85A62E50BD3C008598EE;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9C642E522E747DA300020D81 /* XCRemoteSwiftPackageReference "ID3TagEditor" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9CBE85B02E50BD3C008598EE /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9CBE85AE2E50BD3C008598EE /* Vaux Cue Sheet */,
+				9CBE85BF2E50BD3E008598EE /* WAUXTests */,
+				9CBE85C92E50BD3E008598EE /* WAUXUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9CBE85AD2E50BD3C008598EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85BE2E50BD3E008598EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85C82E50BD3E008598EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9CBE85AB2E50BD3C008598EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85BC2E50BD3E008598EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CBE85C62E50BD3E008598EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9CBE85C22E50BD3E008598EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CBE85AE2E50BD3C008598EE /* Vaux Cue Sheet */;
+			targetProxy = 9CBE85C12E50BD3E008598EE /* PBXContainerItemProxy */;
+		};
+		9CBE85CC2E50BD3E008598EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CBE85AE2E50BD3C008598EE /* Vaux Cue Sheet */;
+			targetProxy = 9CBE85CB2E50BD3E008598EE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9CBE85D22E50BD3E008598EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_STAT_CACHE_DISABLE = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9CBE85D32E50BD3E008598EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_STAT_CACHE_DISABLE = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		9CBE85D52E50BD3E008598EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_STAT_CACHE_DISABLE = YES;
+				CODE_SIGN_ENTITLEMENTS = WAUX/WAUX.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "\"WAUX/Preview Content\"";
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaux Cue Sheet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MARKETING_VERSION = 0.3;
+				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
+				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		9CBE85D62E50BD3E008598EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_STAT_CACHE_DISABLE = YES;
+				CODE_SIGN_ENTITLEMENTS = WAUX/WAUX.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_ASSET_PATHS = "\"WAUX/Preview Content\"";
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Vaux Cue Sheet";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MARKETING_VERSION = 0.3;
+				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
+				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		9CBE85D82E50BD3E008598EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.waux.audio.WAUXTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WAUX.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WAUX";
+			};
+			name = Debug;
+		};
+		9CBE85D92E50BD3E008598EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.waux.audio.WAUXTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WAUX.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WAUX";
+			};
+			name = Release;
+		};
+		9CBE85DB2E50BD3E008598EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.waux.audio.WAUXUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = WAUX;
+			};
+			name = Debug;
+		};
+		9CBE85DC2E50BD3E008598EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 62CS2SG5TM;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.waux.audio.WAUXUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = WAUX;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CBE85AA2E50BD3C008598EE /* Build configuration list for PBXProject "WAUX" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CBE85D22E50BD3E008598EE /* Debug */,
+				9CBE85D32E50BD3E008598EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CBE85D42E50BD3E008598EE /* Build configuration list for PBXNativeTarget "Vaux Cue Sheet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CBE85D52E50BD3E008598EE /* Debug */,
+				9CBE85D62E50BD3E008598EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CBE85D72E50BD3E008598EE /* Build configuration list for PBXNativeTarget "WAUXTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CBE85D82E50BD3E008598EE /* Debug */,
+				9CBE85D92E50BD3E008598EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CBE85DA2E50BD3E008598EE /* Build configuration list for PBXNativeTarget "WAUXUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CBE85DB2E50BD3E008598EE /* Debug */,
+				9CBE85DC2E50BD3E008598EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9C642E522E747DA300020D81 /* XCRemoteSwiftPackageReference "ID3TagEditor" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/chicio/ID3TagEditor";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9C642E532E747DA300020D81 /* ID3TagEditor */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9C642E522E747DA300020D81 /* XCRemoteSwiftPackageReference "ID3TagEditor" */;
+			productName = ID3TagEditor;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9CBE85A72E50BD3C008598EE /* Project object */;
+}
