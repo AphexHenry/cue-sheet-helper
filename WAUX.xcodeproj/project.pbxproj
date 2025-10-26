@@ -28,7 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		9CBE85AF2E50BD3C008598EE /* WAUX.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = WAUX.app; path = "Vaux Cue Sheet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CBE85AF2E50BD3C008598EE /* Vaux Cue Sheet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Vaux Cue Sheet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CBE85C02E50BD3E008598EE /* WAUXTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WAUXTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9CBE85CA2E50BD3E008598EE /* WAUXUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WAUXUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -90,7 +90,7 @@
 		9CBE85B02E50BD3C008598EE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9CBE85AF2E50BD3C008598EE /* WAUX.app */,
+				9CBE85AF2E50BD3C008598EE /* Vaux Cue Sheet.app */,
 				9CBE85C02E50BD3E008598EE /* WAUXTests.xctest */,
 				9CBE85CA2E50BD3E008598EE /* WAUXUITests.xctest */,
 			);
@@ -120,7 +120,7 @@
 				9C642E532E747DA300020D81 /* ID3TagEditor */,
 			);
 			productName = "Vaux Cue Sheet";
-			productReference = 9CBE85AF2E50BD3C008598EE /* WAUX.app */;
+			productReference = 9CBE85AF2E50BD3C008598EE /* Vaux Cue Sheet.app */;
 			productType = "com.apple.product-type.application";
 		};
 		9CBE85BF2E50BD3E008598EE /* WAUXTests */ = {
@@ -411,7 +411,7 @@
 				CODE_SIGN_ENTITLEMENTS = WAUX/WAUX.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"WAUX/Preview Content\"";
 				DEVELOPMENT_TEAM = 62CS2SG5TM;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -424,8 +424,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 0.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.4;
 				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -444,7 +444,7 @@
 				CODE_SIGN_ENTITLEMENTS = WAUX/WAUX.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"WAUX/Preview Content\"";
 				DEVELOPMENT_TEAM = 62CS2SG5TM;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -457,8 +457,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
-				MARKETING_VERSION = 0.3;
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.4;
 				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
 				PRODUCT_NAME = "$(TARGET_NAME)";

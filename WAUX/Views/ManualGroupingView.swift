@@ -31,9 +31,16 @@ struct ManualGroupingView: View {
     
     // Get unique catalog IDs from layer 1 (raw events)
     private var uniqueCatalogIDs: [String] {
-        let catalogIDs = Set(parsingResult.layer1.map { $0.catalogID })
-            .filter { $0 != "FADE_IN" && $0 != "FADE_OUT" && $0 != "CROSS_FADE" }
-        return Array(catalogIDs).sorted()
+        let allCatalogIDs = parsingResult.layer1.map { $0.catalogID }
+        let catalogIDSet = Set(allCatalogIDs)
+        
+        let filteredCatalogIDs = catalogIDSet.filter { catalogID in
+            // Filter out fade events in both underscore and space formats
+            catalogID != "FADE_IN" && catalogID != "FADE_OUT" && catalogID != "CROSS_FADE" &&
+            catalogID != "FADE IN" && catalogID != "FADE OUT" && catalogID != "CROSS FADE"
+        }
+        
+        return Array(filteredCatalogIDs).sorted()
     }
     
     // Get current groups (either manual or automatic)

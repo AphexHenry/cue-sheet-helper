@@ -153,6 +153,15 @@ struct CueFileHelperView: View {
         .onAppear {
             loadSettings()
         }
+        .background(
+            KeyEventHandlingView(
+                onBackspace: {
+                    if selectedLayer == .layer3 && !selectedEventIDs.isEmpty {
+                        discardSelectedEvents()
+                    }
+                }
+            )
+        )
         .sheet(item: $selectedEventForInfo) { event in
             CueEventDetailView(event: event)
         }
@@ -343,8 +352,15 @@ struct CueFileHelperView: View {
                     .width(30)
                     
                     TableColumn("Catalog ID", value: \.catalogID) { event in
-                        Text(event.catalogID)
-                            .background(isSelected(event) ? Color.orange.opacity(0.2) : Color.clear)
+                        HStack {
+                            Text(event.catalogID)
+                                .background(isSelected(event) ? Color.orange.opacity(0.2) : Color.clear)
+                            if event.isDiscarded {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                                    .help("Discarded from final calculation")
+                            }
+                        }
                     }
                     .width(min: 150, ideal: 200)
                     
@@ -384,6 +400,25 @@ struct CueFileHelperView: View {
                             .background(isSelected(event) ? Color.orange.opacity(0.2) : Color.clear)
                     }
                     .width(min: 150, ideal: 200)
+                }
+                .contextMenu {
+                    if !selectedEventIDs.isEmpty {
+                        let selectedEvents = currentEvents.filter { selectedEventIDs.contains($0.id) }
+                        let hasDiscardedSelected = selectedEvents.contains { $0.isDiscarded }
+                        let hasActiveSelected = selectedEvents.contains { !$0.isDiscarded }
+                        
+                        if hasActiveSelected {
+                            Button("Discard Selected") {
+                                discardSelectedEvents()
+                            }
+                        }
+                        
+                        if hasDiscardedSelected {
+                            Button("Restore Selected") {
+                                restoreSelectedEvents()
+                            }
+                        }
+                    }
                 }
             } else {
                 // Layer 1 and 2: Show all columns including Track and Event
@@ -534,6 +569,13 @@ struct CueFileHelperView: View {
                     Text("• \(selectedEventIDs.count) selected")
                         .font(.caption)
                         .foregroundColor(.orange)
+                }
+                
+                if selectedLayer == .layer3 && hasDiscardedEvents {
+                    let discardedCount = parsingService.getDiscardedEvents(from: parsingResult!).count
+                    Text("• \(discardedCount) discarded")
+                        .font(.caption)
+                        .foregroundColor(.red)
                 }
             }
             
@@ -773,9 +815,12 @@ struct CueFileHelperView: View {
         var csvContent = csvHeader
         
         for event in currentEvents {
-            let catalogID = escapeCSVValue(event.catalogID)
-            let title = escapeCSVValue(event.title)
-            let uniqueTitles = escapeCSVValue(event.uniqueTitles.sorted().joined(separator: "; "))
+            // Apply underscore replacement only during CSV export
+            let catalogID = escapeCSVValue(replaceUnderscoresWithSpaces ? event.catalogID.replacingOccurrences(of: "_", with: " ") : event.catalogID)
+            let title = escapeCSVValue(replaceUnderscoresWithSpaces ? event.title.replacingOccurrences(of: "_", with: " ") : event.title)
+            let uniqueTitles = escapeCSVValue(replaceUnderscoresWithSpaces ? 
+                event.uniqueTitles.sorted().joined(separator: "; ").replacingOccurrences(of: "_", with: " ") : 
+                event.uniqueTitles.sorted().joined(separator: "; "))
             let startTime = escapeCSVValue(event.startTime)
             let endTime = escapeCSVValue(event.endTime)
             let duration = escapeCSVValue(event.duration)
@@ -863,45 +908,8 @@ struct CueFileHelperView: View {
             }
         }
         
-        if replaceUnderscoresWithSpaces {
-            // Apply underscore replacement to all layers
-            let updatedLayer1 = result.layer1.map { event in
-                var updatedEvent = event
-                updatedEvent.title = event.title.replacingOccurrences(of: "_", with: " ")
-                updatedEvent.catalogID = event.catalogID.replacingOccurrences(of: "_", with: " ")
-                return updatedEvent
-            }
-            
-            let updatedLayer2 = result.layer2.map { event in
-                var updatedEvent = event
-                updatedEvent.title = event.title.replacingOccurrences(of: "_", with: " ")
-                updatedEvent.catalogID = event.catalogID.replacingOccurrences(of: "_", with: " ")
-                return updatedEvent
-            }
-            
-            let updatedLayer3 = result.layer3.map { event in
-                var updatedEvent = event
-                updatedEvent.title = event.title.replacingOccurrences(of: "_", with: " ")
-                updatedEvent.catalogID = event.catalogID.replacingOccurrences(of: "_", with: " ")
-                return updatedEvent
-            }
-            
-            let updatedLayer4 = result.layer4.map { event in
-                var updatedEvent = event
-                updatedEvent.title = event.title.replacingOccurrences(of: "_", with: " ")
-                updatedEvent.catalogID = event.catalogID.replacingOccurrences(of: "_", with: " ")
-                // Also update unique titles
-                updatedEvent.uniqueTitles = Set(event.uniqueTitles.map { $0.replacingOccurrences(of: "_", with: " ") })
-                return updatedEvent
-            }
-            
-            parsingResult = CueParsingResult(
-                layer1: updatedLayer1,
-                layer2: updatedLayer2,
-                layer3: updatedLayer3,
-                layer4: updatedLayer4
-            )
-        }
+        // Note: replaceUnderscoresWithSpaces is now only applied during CSV export
+        // This prevents fade events from being corrupted during processing
         
         // Save settings for next time
         saveSettings()
@@ -929,6 +937,35 @@ struct CueFileHelperView: View {
             selectedEventIDs = []
             replaceUnderscoresWithSpaces = false
         }
+    }
+    
+    // MARK: - Discard Functionality
+    
+    private func discardSelectedEvents() {
+        guard var result = parsingResult else { return }
+        
+        for eventID in selectedEventIDs {
+            parsingService.discardEvent(eventID, in: &result)
+        }
+        
+        parsingResult = result
+        selectedEventIDs = []
+    }
+    
+    private func restoreSelectedEvents() {
+        guard var result = parsingResult else { return }
+        
+        for eventID in selectedEventIDs {
+            parsingService.restoreEvent(eventID, in: &result)
+        }
+        
+        parsingResult = result
+        selectedEventIDs = []
+    }
+    
+    private var hasDiscardedEvents: Bool {
+        guard let result = parsingResult else { return false }
+        return !parsingService.getDiscardedEvents(from: result).isEmpty
     }
 }
 
@@ -1175,6 +1212,38 @@ struct ComposerModalView: View {
         .frame(width: 400, height: 250)
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(12)
+    }
+}
+
+// MARK: - Key Event Handling View
+
+struct KeyEventHandlingView: NSViewRepresentable {
+    let onBackspace: () -> Void
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = KeyEventView()
+        view.onBackspace = onBackspace
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let keyView = nsView as? KeyEventView {
+            keyView.onBackspace = onBackspace
+        }
+    }
+}
+
+class KeyEventView: NSView {
+    var onBackspace: (() -> Void)?
+    
+    override var acceptsFirstResponder: Bool { true }
+    
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 51 { // Backspace key
+            onBackspace?()
+        } else {
+            super.keyDown(with: event)
+        }
     }
 }
 

@@ -63,6 +63,7 @@ struct CueEvent: Identifiable {
     var state: String
     var uniqueTitles: Set<String>  // Track unique titles when merging
     var composer: String
+    var isDiscarded: Bool = false  // Flag to mark events as discarded from final calculation
 }
 
 class CueFileParsingService {
@@ -137,11 +138,11 @@ class CueFileParsingService {
             return ParsedName(catalogID: "CROSS_FADE", title: "", fullName: clipName)
         }
         
-        // Step 1: Remove common suffixes (.L, .R, .A1, track numbers, etc.)
-        // First remove channel suffixes like -03.L, .L, .R, .A1
-        if let suffixMatch = trimmedName.range(of: "[-.]\\w+\\.(L|R|A\\d+)$", options: .regularExpression) {
+        // Step 1: Remove common suffixes (.L, .R, .A1, .Ls, .LFE, .C, .Rs, track numbers, etc.)
+        // First remove channel suffixes like -03.L, .L, .R, .A1, .Ls, .LFE, .C, .Rs
+        if let suffixMatch = trimmedName.range(of: "[-.]\\w+\\.(L|R|A\\d+|Ls|LFE|C|Rs)$", options: .regularExpression) {
             trimmedName = String(trimmedName[..<suffixMatch.lowerBound])
-        } else if let suffixMatch = trimmedName.range(of: "\\.(L|R|A\\d+)$", options: .regularExpression) {
+        } else if let suffixMatch = trimmedName.range(of: "\\.(L|R|A\\d+|Ls|LFE|C|Rs)$", options: .regularExpression) {
             trimmedName = String(trimmedName[..<suffixMatch.lowerBound])
         }
         
@@ -276,14 +277,14 @@ class CueFileParsingService {
         for i in 0..<allEvents.count {
             if allEvents[i].state == "Muted" {
                 // Check previous event - if it's a cross fade, convert to fade out
-                if i > 0 && allEvents[i - 1].catalogID == "CROSS_FADE" {
+                if i > 0 && (allEvents[i - 1].catalogID == "CROSS_FADE" || allEvents[i - 1].catalogID == "CROSS FADE") {
                     print("      ⬇️ Converting CROSS_FADE (before muted clip) to FADE_OUT")
                     allEvents[i - 1].catalogID = "FADE_OUT"
                     convertedCount += 1
                 }
                 
                 // Check next event - if it's a cross fade, convert to fade in
-                if i < allEvents.count - 1 && allEvents[i + 1].catalogID == "CROSS_FADE" {
+                if i < allEvents.count - 1 && (allEvents[i + 1].catalogID == "CROSS_FADE" || allEvents[i + 1].catalogID == "CROSS FADE") {
                     print("      ⬆️ Converting CROSS_FADE (after muted clip) to FADE_IN")
                     allEvents[i + 1].catalogID = "FADE_IN"
                     convertedCount += 1
@@ -323,7 +324,8 @@ class CueFileParsingService {
                 let event = channelEvents[i]
                 
                 // Skip if it's a standalone fade (shouldn't happen but handle gracefully)
-                if event.catalogID == "FADE_IN" || event.catalogID == "FADE_OUT" || event.catalogID == "CROSS_FADE" {
+                if event.catalogID == "FADE_IN" || event.catalogID == "FADE_OUT" || event.catalogID == "CROSS_FADE" ||
+                   event.catalogID == "FADE IN" || event.catalogID == "FADE OUT" || event.catalogID == "CROSS FADE" {
                     i += 1
                     continue
                 }
@@ -334,7 +336,7 @@ class CueFileParsingService {
                 // Look backwards for fade in or cross fade from different catalog
                 if i > 0 {
                     let prevEvent = channelEvents[i - 1]
-                    if prevEvent.catalogID == "FADE_IN" {
+                    if prevEvent.catalogID == "FADE_IN" || prevEvent.catalogID == "FADE IN" {
                         // Only merge if temporally adjacent (fade ends where event starts)
                         if prevEvent.endTime == event.startTime {
                             print("      ⬅️ Merging FADE_IN with \(event.catalogID)")
@@ -342,13 +344,16 @@ class CueFileParsingService {
                         } else {
                             print("      ⏭️ Skipping non-adjacent FADE_IN (gap: \(prevEvent.endTime) to \(event.startTime))")
                         }
-                    } else if prevEvent.catalogID == "CROSS_FADE" {
+                    } else if prevEvent.catalogID == "CROSS_FADE" || prevEvent.catalogID == "CROSS FADE" {
                         // Check if there's an event before the cross fade
                         if i > 1 {
                             let beforeCrossFade = channelEvents[i - 2]
                             // Only include if previous event has different catalog (cross fade counted twice)
                             // If same catalog, it would have been merged already
-                            if beforeCrossFade.catalogID != event.catalogID && beforeCrossFade.catalogID != "FADE_IN" && beforeCrossFade.catalogID != "FADE_OUT" && beforeCrossFade.catalogID != "CROSS_FADE" {
+                            if beforeCrossFade.catalogID != event.catalogID && 
+                               beforeCrossFade.catalogID != "FADE_IN" && beforeCrossFade.catalogID != "FADE IN" &&
+                               beforeCrossFade.catalogID != "FADE_OUT" && beforeCrossFade.catalogID != "FADE OUT" &&
+                               beforeCrossFade.catalogID != "CROSS_FADE" && beforeCrossFade.catalogID != "CROSS FADE" {
                                 // Different catalog ID - cross fade belongs to both
                                 print("      ⬅️ Including CROSS_FADE (different catalog) in \(event.catalogID)")
                                 mergedEvent.startTime = prevEvent.startTime
@@ -361,7 +366,7 @@ class CueFileParsingService {
                 while nextIndex < channelEvents.count {
                     let nextEvent = channelEvents[nextIndex]
                     
-                    if nextEvent.catalogID == "FADE_OUT" {
+                    if nextEvent.catalogID == "FADE_OUT" || nextEvent.catalogID == "FADE OUT" {
                         // Only merge if temporally adjacent (event ends where fade starts)
                         if mergedEvent.endTime == nextEvent.startTime {
                             print("      ➡️ Merging FADE_OUT with \(event.catalogID)")
@@ -372,7 +377,7 @@ class CueFileParsingService {
                             nextIndex += 1
                         }
                         break // Fade out ends the chain
-                    } else if nextEvent.catalogID == "CROSS_FADE" {
+                    } else if nextEvent.catalogID == "CROSS_FADE" || nextEvent.catalogID == "CROSS FADE" {
                         // Cross fade - check what comes after
                         if nextIndex < channelEvents.count - 1 {
                             let afterCrossFade = channelEvents[nextIndex + 1]
@@ -522,7 +527,15 @@ class CueFileParsingService {
         
         print("\n📊 LAYER 4: Final aggregation by catalog ID...")
         
-        for event in events {
+        // Filter out discarded events
+        let activeEvents = events.filter { !$0.isDiscarded }
+        let discardedCount = events.count - activeEvents.count
+        
+        if discardedCount > 0 {
+            print("   🗑️ Filtered out \(discardedCount) discarded event(s)")
+        }
+        
+        for event in activeEvents {
             let startSeconds = parseTimecode(event.startTime)
             let endSeconds = parseTimecode(event.endTime)
             let eventDuration = endSeconds - startSeconds
@@ -596,6 +609,58 @@ class CueFileParsingService {
         return parseWithAllLayers(from: lines, skipCatalogExtraction: skipCatalogExtraction).layer4
     }
     
+    /// Test parseName with skip catalog extraction
+    func testParseNameSkip() {
+        let testCases = [
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.L", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.Ls", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.LFE", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.C", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.Rs", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.R", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1-01.A1", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy.1", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("1M11-MAIN THEME_BAKER'S SON_1M-01 copy", "1M11-MAIN THEME_BAKER'S SON_1M-01 copy"),
+            ("UPM_MAT103_7_Champions_Instrumental_Martin_8168-04.L", "UPM_MAT103_7_Champions_Instrumental_Martin_8168")
+        ]
+        
+        print("\n🧪 Testing parseName with skip catalog extraction:")
+        
+        for (input, expectedCatalogID) in testCases {
+            let result = parseName(input, skipCatalogExtraction: true)
+            let passed = result.catalogID == expectedCatalogID
+            let icon = passed ? "✅" : "❌"
+            print("\(icon) Input: '\(input)'")
+            print("   Expected catalogID: '\(expectedCatalogID)'")
+            print("   Got catalogID:      '\(result.catalogID)'")
+            print("   Title:              '\(result.title)'")
+            if !passed {
+                print("   ⚠️ MISMATCH!")
+            }
+            print()
+        }
+        
+        // Test fade events still work correctly
+        print("\n🧪 Testing fade events with skip catalog extraction:")
+        let fadeTestCases = [
+            ("Some Event (fade in)", "FADE_IN"),
+            ("Another Event (fade out)", "FADE_OUT"),
+            ("Cross Event (cross fade)", "CROSS_FADE")
+        ]
+        
+        for (input, expectedCatalogID) in fadeTestCases {
+            let result = parseName(input, skipCatalogExtraction: true)
+            let passed = result.catalogID == expectedCatalogID
+            let icon = passed ? "✅" : "❌"
+            print("\(icon) Input: '\(input)'")
+            print("   Expected catalogID: '\(expectedCatalogID)'")
+            print("   Got catalogID:      '\(result.catalogID)'")
+            if !passed {
+                print("   ⚠️ MISMATCH!")
+            }
+        }
+    }
+    
     /// Recalculate layers 2, 3, and 4 with manual grouping
     func recalculateWithManualGrouping(_ result: CueParsingResult) -> CueParsingResult {
         print("\n🔄 RECALCULATING WITH MANUAL GROUPING...")
@@ -614,5 +679,39 @@ class CueFileParsingService {
         
         print("✅ RECALCULATION COMPLETE")
         return updatedResult
+    }
+    
+    /// Mark an event as discarded by its ID
+    func discardEvent(_ eventID: UUID, in result: inout CueParsingResult) {
+        // Find and mark the event in layer 3 as discarded
+        if let index = result.layer3.firstIndex(where: { $0.id == eventID }) {
+            result.layer3[index].isDiscarded = true
+            print("🗑️ Marked event '\(result.layer3[index].catalogID)' as discarded")
+            
+            // Recalculate layer 4 with the discarded event filtered out
+            result.layer4 = finalAggregation(events: result.layer3, manualGrouping: result.manualGrouping)
+        }
+    }
+    
+    /// Restore a discarded event by its ID
+    func restoreEvent(_ eventID: UUID, in result: inout CueParsingResult) {
+        // Find and restore the event in layer 3
+        if let index = result.layer3.firstIndex(where: { $0.id == eventID }) {
+            result.layer3[index].isDiscarded = false
+            print("♻️ Restored event '\(result.layer3[index].catalogID)'")
+            
+            // Recalculate layer 4 with the restored event included
+            result.layer4 = finalAggregation(events: result.layer3, manualGrouping: result.manualGrouping)
+        }
+    }
+    
+    /// Get all discarded events from layer 3
+    func getDiscardedEvents(from result: CueParsingResult) -> [CueEvent] {
+        return result.layer3.filter { $0.isDiscarded }
+    }
+    
+    /// Recalculate only layer 4 (useful when discarding/restoring events)
+    func recalculateLayer4(_ result: inout CueParsingResult) {
+        result.layer4 = finalAggregation(events: result.layer3, manualGrouping: result.manualGrouping)
     }
 }
