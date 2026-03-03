@@ -71,9 +71,9 @@ struct CueFileHelperView: View {
     @State private var showingDirectoryPicker = false
     @State private var selectedEventForInfo: CueEvent?
     @State private var filterText: String = ""
-    @State private var sortField: SortField = .catalogID
+    @State private var sortField: SortField = .startTime
     @State private var sortAscending: Bool = true
-    @State private var sortOrder: [KeyPathComparator<CueEvent>] = []
+    @State private var sortOrder: [KeyPathComparator<CueEvent>] = [KeyPathComparator(\CueEvent.startTime, order: .forward)]
     @State private var selectedEventIDs: Set<UUID> = []
     @State private var isPinned = false
     @State private var showingManualGroupingModal = false
@@ -111,9 +111,9 @@ struct CueFileHelperView: View {
         if !sortOrder.isEmpty {
             return filteredEvents.sorted(using: sortOrder)
         } else {
-            // Default sorting by catalogID
+            // Default sorting by start time
             return filteredEvents.sorted { first, second in
-                first.catalogID.compare(second.catalogID) == .orderedAscending
+                first.startTime.compare(second.startTime) == .orderedAscending
             }
         }
     }
@@ -942,9 +942,9 @@ struct CueFileHelperView: View {
             processingProgress = nil
             selectedLayer = .layer4
             filterText = ""
-            sortField = .catalogID
+            sortField = .startTime
             sortAscending = true
-            sortOrder = []
+            sortOrder = [KeyPathComparator(\CueEvent.startTime, order: .forward)]
             selectedEventIDs = []
         }
     }
@@ -1043,9 +1043,9 @@ struct CueFileHelperView: View {
             isFileLoaded = true
             selectedEventIDs = []
             filterText = ""
-            sortField = .catalogID
+            sortField = .startTime
             sortAscending = true
-            sortOrder = []
+            sortOrder = [KeyPathComparator(\CueEvent.startTime, order: .forward)]
 
             replaceUnderscoresWithSpaces = loadedProject.metadata.replaceUnderscoresWithSpaces
             skipCatalogExtraction = loadedProject.metadata.skipCatalogExtraction
