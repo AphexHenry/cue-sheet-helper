@@ -1,5 +1,5 @@
 // This test file runs the actual CueFileParsingService tests
-// Run with: swiftc WAUX/Services/CueFileParsingService.swift test_simplification.swift -o test_bin && ./test_bin
+// Run with: swiftc WAUX/Services/TrackNameParser.swift WAUX/Services/CueFileParsingService.swift WAUX/Tests/test_simplification.swift -o test_bin && ./test_bin
 // Or use the built-in testSimplification() method from within the service
 
 import Foundation

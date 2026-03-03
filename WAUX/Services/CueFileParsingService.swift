@@ -7,18 +7,6 @@
 
 import Foundation
 
-// Parsed name structure
-struct ParsedName {
-    let catalogID: String      // e.g., "UPM_MAT103_7" or "MISS_25FPS_MX_DCP_STEREO_WIP_250721"
-    let title: String          // e.g., "Champions_Instrumental_Martin_8168"
-    let fullName: String       // Original full name
-    
-    var isFadeIn: Bool { fullName.lowercased().contains("(fade in)") }
-    var isFadeOut: Bool { fullName.lowercased().contains("(fade out)") }
-    var isCrossFade: Bool { fullName.lowercased().contains("(cross fade)") }
-    var isFade: Bool { isFadeIn || isFadeOut || isCrossFade }
-}
-
 // Manual grouping associations
 struct ManualGrouping {
     var associations: [String: String] = [:]  // catalogID -> targetGroupID
@@ -126,66 +114,7 @@ class CueFileParsingService {
     /// Example: "UPM_MAT103_7_Champions_Instrumental_Martin_8168-04.L" -> 
     ///          catalogID: "UPM_MAT103_7", title: "Champions_Instrumental_Martin_8168"
     func parseName(_ clipName: String, skipCatalogExtraction: Bool = false) -> ParsedName {
-        var trimmedName = clipName
-        
-        // Check if it's a fade event
-        let lowerName = clipName.lowercased()
-        if lowerName.contains("(fade in)") {
-            return ParsedName(catalogID: "FADE_IN", title: "", fullName: clipName)
-        } else if lowerName.contains("(fade out)") {
-            return ParsedName(catalogID: "FADE_OUT", title: "", fullName: clipName)
-        } else if lowerName.contains("(cross fade)") {
-            return ParsedName(catalogID: "CROSS_FADE", title: "", fullName: clipName)
-        }
-        
-        // Step 1: Remove common suffixes (.L, .R, .A1, .Ls, .LFE, .C, .Rs, track numbers, etc.)
-        // First remove channel suffixes like -03.L, .L, .R, .A1, .Ls, .LFE, .C, .Rs
-        if let suffixMatch = trimmedName.range(of: "[-.]\\w+\\.(L|R|A\\d+|Ls|LFE|C|Rs)$", options: .regularExpression) {
-            trimmedName = String(trimmedName[..<suffixMatch.lowerBound])
-        } else if let suffixMatch = trimmedName.range(of: "\\.(L|R|A\\d+|Ls|LFE|C|Rs)$", options: .regularExpression) {
-            trimmedName = String(trimmedName[..<suffixMatch.lowerBound])
-        }
-        
-        // Remove remaining track/take numbers like .1, .2, etc.
-        if let suffixMatch = trimmedName.range(of: "\\.\\d+$", options: .regularExpression) {
-            trimmedName = String(trimmedName[..<suffixMatch.lowerBound])
-        }
-        
-        // If skip catalog extraction is enabled, use the cleaned name as catalog ID
-        if skipCatalogExtraction {
-            return ParsedName(catalogID: trimmedName, title: "", fullName: clipName)
-        }
-        
-        // Step 2: Extract catalog ID and title based on the pattern
-        // Pattern: Find the first digit, then find the first letter after it - that's where the title starts
-        // Example: "UPM_NTP504_3_Take_My_Hand..." -> catalogID: "UPM_NTP504_3", title: "Take_My_Hand..."
-        
-        var catalogID = trimmedName
-        var title = ""
-        
-        // Find the first digit in the string
-        if let firstDigitRange = trimmedName.range(of: "\\d", options: .regularExpression) {
-            let firstDigitIndex = firstDigitRange.lowerBound
-            
-            // Look for the first letter after this digit (skipping any non-letter characters)
-            let afterDigitString = String(trimmedName[firstDigitIndex...])
-            if let firstLetterAfterDigitRange = afterDigitString.range(of: "[A-Za-z]", options: .regularExpression) {
-                let letterIndex = trimmedName.index(firstDigitIndex, offsetBy: afterDigitString.distance(from: afterDigitString.startIndex, to: firstLetterAfterDigitRange.lowerBound))
-                
-                // Everything before this letter is the catalog ID
-                // Only trim trailing separators, preserve leading ones
-                let catalogPart = String(trimmedName[..<letterIndex])
-                catalogID = catalogPart.trimmingCharacters(in: CharacterSet(charactersIn: "_-"))
-                
-                // If the original string started with underscore, preserve it
-                if trimmedName.hasPrefix("_") && !catalogID.hasPrefix("_") {
-                    catalogID = "_" + catalogID
-                }
-                title = String(trimmedName[letterIndex...])
-            }
-        }
-        
-        return ParsedName(catalogID: catalogID, title: title, fullName: clipName)
+        return TrackNameParser.parse(clipName, skipCatalogExtraction: skipCatalogExtraction)
     }
     
     /// Get simplified name (catalog ID only) - convenience method for testing
@@ -445,20 +374,25 @@ class CueFileParsingService {
     
     // MARK: - Layer 3: Merge Across Channels
     
-    /// Layer 3: Merge events from different channels that overlap in time and have same catalog ID
-    func mergeAcrossChannels(events: [CueEvent]) -> [CueEvent] {
+    /// Layer 3: Merge events from different channels that overlap in time and have same catalog ID (or same manual group)
+    func mergeAcrossChannels(events: [CueEvent], manualGrouping: ManualGrouping = ManualGrouping()) -> [CueEvent] {
         var merged: [CueEvent] = []
         
         print("\n📡 LAYER 3: Merging across channels...")
         
-        // Group by catalog ID
-        let eventsByCatalog = Dictionary(grouping: events) { $0.catalogID }
+        // Group by effective group ID (manual grouping takes precedence over catalog ID)
+        let eventsByGroup = Dictionary(grouping: events) { event -> String in
+            if manualGrouping.hasManualAssociation(for: event.catalogID) {
+                return manualGrouping.getGroupID(for: event.catalogID)!
+            }
+            return event.catalogID
+        }
         
-        for catalogID in eventsByCatalog.keys.sorted() {
-            guard let catalogEvents = eventsByCatalog[catalogID] else { continue }
+        for groupID in eventsByGroup.keys.sorted() {
+            guard let groupEvents = eventsByGroup[groupID] else { continue }
             
             // Sort by start time
-            let sortedEvents = catalogEvents.sorted { 
+            let sortedEvents = groupEvents.sorted { 
                 parseTimecode($0.startTime) < parseTimecode($1.startTime) 
             }
             
@@ -470,8 +404,8 @@ class CueFileParsingService {
                 var mergedEvent = sortedEvents[i]
                 var minStart = parseTimecode(mergedEvent.startTime)
                 var maxEnd = parseTimecode(mergedEvent.endTime)
-                var minStartTimecode = mergedEvent.startTime  // Preserve original timecode with frames
-                var maxEndTimecode = mergedEvent.endTime      // Preserve original timecode with frames
+                var minStartTimecode = mergedEvent.startTime
+                var maxEndTimecode = mergedEvent.endTime
                 processedIndices.insert(i)
                 
                 // Find all overlapping events
@@ -482,17 +416,14 @@ class CueFileParsingService {
                     let otherStart = parseTimecode(otherEvent.startTime)
                     let otherEnd = parseTimecode(otherEvent.endTime)
                     
-                    // Check for overlap
                     if otherStart <= maxEnd {
-                        print("      🔗 Merging overlapping events from channels \(mergedEvent.channel) and \(otherEvent.channel)")
+                        print("      🔗 Merging overlapping events for group '\(groupID)' from channels \(mergedEvent.channel) and \(otherEvent.channel)")
                         
-                        // Update min start time and preserve the original timecode string
                         if otherStart < minStart {
                             minStart = otherStart
                             minStartTimecode = otherEvent.startTime
                         }
                         
-                        // Update max end time and preserve the original timecode string
                         if otherEnd > maxEnd {
                             maxEnd = otherEnd
                             maxEndTimecode = otherEvent.endTime
@@ -503,11 +434,12 @@ class CueFileParsingService {
                     }
                 }
                 
-                // Update times and duration based on merged range
+                // Use the group ID as catalog ID so downstream layers see a unified entry
+                mergedEvent.catalogID = groupID
+                
                 let durationSeconds = maxEnd - minStart
                 mergedEvent.duration = formatDuration(durationSeconds)
                 
-                // Use the preserved original timecodes (with frame precision intact)
                 mergedEvent.startTime = minStartTimecode
                 mergedEvent.endTime = maxEndTimecode
                 
@@ -592,7 +524,7 @@ class CueFileParsingService {
         
         let layer1 = parseRawFile(lines: lines, skipCatalogExtraction: skipCatalogExtraction)
         let layer2 = aggregateFadesWithClips(events: layer1, manualGrouping: manualGrouping)
-        let layer3 = mergeAcrossChannels(events: layer2)
+        let layer3 = mergeAcrossChannels(events: layer2, manualGrouping: manualGrouping)
         let layer4 = finalAggregation(events: layer3, manualGrouping: manualGrouping)
         
         print("\n" + String(repeating: "=", count: 60))
@@ -666,7 +598,7 @@ class CueFileParsingService {
         print("\n🔄 RECALCULATING WITH MANUAL GROUPING...")
         
         let layer2 = aggregateFadesWithClips(events: result.layer1, manualGrouping: result.manualGrouping)
-        let layer3 = mergeAcrossChannels(events: layer2)
+        let layer3 = mergeAcrossChannels(events: layer2, manualGrouping: result.manualGrouping)
         let layer4 = finalAggregation(events: layer3, manualGrouping: result.manualGrouping)
         
         let updatedResult = CueParsingResult(

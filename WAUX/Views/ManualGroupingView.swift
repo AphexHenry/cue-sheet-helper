@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 
 struct CatalogItem: Identifiable, Hashable {
     let id: String
+    let title: String
 }
 
 // MARK: - Manual Grouping View
@@ -28,6 +29,8 @@ struct ManualGroupingView: View {
     @State private var groupColors: [String: Color] = [:]
     @State private var showingGroupNameDialog = false
     @State private var suggestedGroupName = ""
+    @State private var catalogSortOrder: [KeyPathComparator<CatalogItem>] = [KeyPathComparator(\CatalogItem.id)]
+    @State private var catalogFilterText: String = ""
     
     // Get unique catalog IDs from layer 1 (raw events)
     private var uniqueCatalogIDs: [String] {
@@ -35,12 +38,41 @@ struct ManualGroupingView: View {
         let catalogIDSet = Set(allCatalogIDs)
         
         let filteredCatalogIDs = catalogIDSet.filter { catalogID in
-            // Filter out fade events in both underscore and space formats
             catalogID != "FADE_IN" && catalogID != "FADE_OUT" && catalogID != "CROSS_FADE" &&
             catalogID != "FADE IN" && catalogID != "FADE OUT" && catalogID != "CROSS FADE"
         }
         
         return Array(filteredCatalogIDs).sorted()
+    }
+    
+    private var sortedCatalogItems: [CatalogItem] {
+        var items = uniqueCatalogIDs.map { id in
+            CatalogItem(id: id, title: titlesByCatalogID[id] ?? "")
+        }
+        if !catalogFilterText.isEmpty {
+            let search = catalogFilterText.lowercased()
+            items = items.filter {
+                $0.id.lowercased().contains(search) || $0.title.lowercased().contains(search)
+            }
+        }
+        return items.sorted(using: catalogSortOrder)
+    }
+    
+    private var titlesByCatalogID: [String: String] {
+        var result: [String: String] = [:]
+        for event in parsingResult.layer1 {
+            if result[event.catalogID] == nil && !event.title.isEmpty {
+                result[event.catalogID] = event.title
+            }
+        }
+        return result
+    }
+    
+    private func displayName(for catalogID: String) -> String {
+        if let title = titlesByCatalogID[catalogID], !title.isEmpty {
+            return "\(catalogID)  —  \(title)"
+        }
+        return catalogID
     }
     
     // Get current groups (either manual or automatic)
@@ -94,7 +126,7 @@ struct ManualGroupingView: View {
             // Bottom controls
             bottomControlsView
         }
-        .frame(width: 1000, height: 700)
+        .frame(width: 1100, height: 700)
         .background(Color(NSColor.windowBackgroundColor))
     }
     
@@ -136,23 +168,47 @@ struct ManualGroupingView: View {
             
             Divider()
             
-            Table(uniqueCatalogIDs.map { CatalogItem(id: $0) }, selection: $selectedItems) {
-                TableColumn("") { item in
-                    HStack {
-                        // Color indicator
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                
+                TextField("Filter by catalog ID or title...", text: $catalogFilterText)
+                    .textFieldStyle(.plain)
+                
+                if !catalogFilterText.isEmpty {
+                    Button(action: { catalogFilterText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(6)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .cornerRadius(6)
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+            
+            Table(sortedCatalogItems, selection: $selectedItems, sortOrder: $catalogSortOrder) {
+                TableColumn("Catalog ID", value: \.id) { item in
+                    HStack(spacing: 6) {
                         Circle()
                             .fill(getColorForCatalogID(item.id))
-                            .frame(width: 12, height: 12)
-                        
-                        Image(systemName: "doc.text")
-                            .foregroundColor(.secondary)
+                            .frame(width: 10, height: 10)
                         
                         Text(item.id)
                             .font(.system(.body, design: .monospaced))
                             .lineLimit(1)
                     }
                 }
-                .width(min: 350)
+                .width(min: 120, ideal: 180)
+                
+                TableColumn("Title", value: \.title) { item in
+                    Text(item.title)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                .width(min: 120, ideal: 180)
             }
             .tableStyle(.inset(alternatesRowBackgrounds: true))
             .frame(height: 400)
@@ -170,7 +226,7 @@ struct ManualGroupingView: View {
                 }
             }
         }
-        .frame(width: 400)
+        .frame(width: 500)
         .onAppear {
             generateGroupColors()
         }
@@ -206,6 +262,7 @@ struct ManualGroupingView: View {
                         GroupView(
                             groupID: groupID,
                             items: currentGroups[groupID] ?? [],
+                            titlesByCatalogID: titlesByCatalogID,
                             isTarget: targetGroup == groupID,
                             groupColor: groupColors[groupID] ?? .gray,
                             onDrop: { catalogID in
@@ -419,6 +476,7 @@ struct ManualGroupingView: View {
 struct GroupView: View {
     let groupID: String
     let items: [String]
+    let titlesByCatalogID: [String: String]
     let isTarget: Bool
     let groupColor: Color
     let onDrop: (String) -> Void
@@ -460,6 +518,14 @@ struct GroupView: View {
                             Text(item)
                                 .font(.system(.caption, design: .monospaced))
                                 .lineLimit(1)
+                                .frame(minWidth: 100, alignment: .leading)
+                            
+                            if let title = titlesByCatalogID[item], !title.isEmpty {
+                                Text(title)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
                             
                             Spacer()
                             

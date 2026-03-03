@@ -10,6 +10,13 @@ import AVFoundation
 
 class ComposerFetchingService {
     private var lastSearchDirectory: URL?
+
+    // Stable key used to persist composer assignments across save/load
+    static func composerAssignmentKey(catalogID: String, title: String) -> String {
+        let cleanedCatalogID = catalogID.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return "\(cleanedCatalogID)|\(cleanedTitle)"
+    }
     
     // Save last directory to UserDefaults
     private func saveLastDirectory(_ url: URL) {

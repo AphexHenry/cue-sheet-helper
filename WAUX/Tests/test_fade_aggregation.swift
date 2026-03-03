@@ -1,5 +1,5 @@
 // Test for fade aggregation logic in CueFileParsingService
-// Run with: swiftc WAUX/Services/CueFileParsingService.swift test_fade_aggregation.swift -o test_fade_bin && ./test_fade_bin
+// Run with: swiftc WAUX/Services/TrackNameParser.swift WAUX/Services/CueFileParsingService.swift WAUX/Tests/test_fade_aggregation.swift -o test_fade_bin && ./test_fade_bin
 
 import Foundation
 

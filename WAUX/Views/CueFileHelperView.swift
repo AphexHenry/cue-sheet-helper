@@ -76,31 +76,16 @@ struct CueFileHelperView: View {
     @State private var sortOrder: [KeyPathComparator<CueEvent>] = []
     @State private var selectedEventIDs: Set<UUID> = []
     @State private var isPinned = false
-    @State private var showingComposerModal = false
-    @State private var showingImportOptionsModal = false
     @State private var showingManualGroupingModal = false
-    @State private var replaceUnderscoresWithSpaces = false
-    @State private var skipCatalogExtraction = false
-    
-    // UserDefaults keys for persistent storage
-    private let replaceUnderscoresKey = "replaceUnderscoresWithSpaces"
-    private let skipCatalogExtractionKey = "skipCatalogExtraction"
+    @AppStorage("replaceUnderscoresWithSpaces") private var replaceUnderscoresWithSpaces = true
+    @AppStorage("skipCatalogExtraction") private var skipCatalogExtraction = false
+    @State private var showingStatusAlert = false
+    @State private var statusAlertTitle = ""
+    @State private var statusAlertMessage = ""
     
     private let parsingService = CueFileParsingService()
     private let composerService = ComposerFetchingService()
-    
-    // MARK: - Settings Management
-    
-    private func loadSettings() {
-        // Load settings with default values (false for both options)
-        replaceUnderscoresWithSpaces = UserDefaults.standard.object(forKey: replaceUnderscoresKey) as? Bool ?? false
-        skipCatalogExtraction = UserDefaults.standard.object(forKey: skipCatalogExtractionKey) as? Bool ?? false
-    }
-    
-    private func saveSettings() {
-        UserDefaults.standard.set(replaceUnderscoresWithSpaces, forKey: replaceUnderscoresKey)
-        UserDefaults.standard.set(skipCatalogExtraction, forKey: skipCatalogExtractionKey)
-    }
+    private let projectPersistenceService = CueProjectPersistenceService()
     
     private var currentEvents: [CueEvent] {
         guard let result = parsingResult else { return [] }
@@ -150,8 +135,11 @@ struct CueFileHelperView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDragging) { providers in
             handleDrop(providers: providers)
         }
-        .onAppear {
-            loadSettings()
+        .onReceive(NotificationCenter.default.publisher(for: .saveCueProjectRequested)) { _ in
+            saveCurrentProject()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .loadCueProjectRequested)) { _ in
+            loadCueProject()
         }
         .background(
             KeyEventHandlingView(
@@ -164,32 +152,6 @@ struct CueFileHelperView: View {
         )
         .sheet(item: $selectedEventForInfo) { event in
             CueEventDetailView(event: event)
-        }
-        .sheet(isPresented: $showingImportOptionsModal) {
-            ImportOptionsModalView(
-                replaceUnderscoresWithSpaces: $replaceUnderscoresWithSpaces,
-                skipCatalogExtraction: $skipCatalogExtraction,
-                onApply: {
-                    showingImportOptionsModal = false
-                    applyImportOptions()
-                },
-                onSkip: {
-                    showingImportOptionsModal = false
-                    saveSettings() // Save current settings even when skipping
-                    showComposerModal()
-                }
-            )
-        }
-        .sheet(isPresented: $showingComposerModal) {
-            ComposerModalView(
-                onSelectFolder: {
-                    showingComposerModal = false
-                    selectDirectoryAndFetch()
-                },
-                onLater: {
-                    showingComposerModal = false
-                }
-            )
         }
         .sheet(isPresented: $showingManualGroupingModal) {
             if let result = parsingResult {
@@ -204,6 +166,11 @@ struct CueFileHelperView: View {
                     }
                 )
             }
+        }
+        .alert(statusAlertTitle, isPresented: $showingStatusAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(statusAlertMessage)
         }
     }
     
@@ -669,11 +636,6 @@ struct CueFileHelperView: View {
                 isFileLoaded = true
                 selectedEventIDs = [] // Clear selection when loading new file
             }
-            
-            // Show import options modal after successful parsing
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                showingImportOptionsModal = true
-            }
         } catch {
             print("Error reading file: \(error)")
         }
@@ -890,39 +852,6 @@ struct CueFileHelperView: View {
         }
     }
     
-    private func applyImportOptions() {
-        guard var result = parsingResult else { return }
-        
-        // If skip catalog extraction is enabled, we need to reparse the file
-        if skipCatalogExtraction {
-            guard let originalURL = originalFileURL else { return }
-            do {
-                let content = try readTextFileContent(at: originalURL)
-                let lines = content.components(separatedBy: .newlines)
-                let newResult = parsingService.parseWithAllLayers(from: lines, skipCatalogExtraction: skipCatalogExtraction)
-                result = newResult
-                parsingResult = newResult
-            } catch {
-                print("Error re-parsing file: \(error)")
-                return
-            }
-        }
-        
-        // Note: replaceUnderscoresWithSpaces is now only applied during CSV export
-        // This prevents fade events from being corrupted during processing
-        
-        // Save settings for next time
-        saveSettings()
-        
-        showComposerModal()
-    }
-    
-    private func showComposerModal() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            showingComposerModal = true
-        }
-    }
-    
     private func clearData() {
         withAnimation {
             parsingResult = nil
@@ -935,8 +864,157 @@ struct CueFileHelperView: View {
             sortAscending = true
             sortOrder = []
             selectedEventIDs = []
-            replaceUnderscoresWithSpaces = false
         }
+    }
+
+    // MARK: - Project Save/Load
+
+    private func saveCurrentProject() {
+        guard let result = parsingResult, let originalFileURL = originalFileURL else {
+            presentStatusAlert(
+                title: "Nothing to Save",
+                message: "Load a cue file first, then save the project."
+            )
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Save Cue Project"
+        panel.message = "Choose where to save your cue project package."
+        panel.nameFieldStringValue = originalFileURL.deletingPathExtension().lastPathComponent
+        panel.canCreateDirectories = true
+
+        panel.begin { response in
+            guard response == .OK, let targetURL = panel.url else { return }
+
+            do {
+                try projectPersistenceService.saveProject(
+                    at: targetURL,
+                    originalFileURL: originalFileURL,
+                    replaceUnderscoresWithSpaces: replaceUnderscoresWithSpaces,
+                    skipCatalogExtraction: skipCatalogExtraction,
+                    manualGroupingAssociations: result.manualGrouping.associations,
+                    composerAssignments: makeComposerAssignments(from: result)
+                )
+
+                presentStatusAlert(
+                    title: "Project Saved",
+                    message: "Cue project was saved successfully."
+                )
+            } catch {
+                presentStatusAlert(
+                    title: "Save Failed",
+                    message: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    private func loadCueProject() {
+        let panel = NSOpenPanel()
+        panel.title = "Load Cue Project"
+        panel.message = "Select a .wauxproject folder."
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+
+        panel.begin { response in
+            guard response == .OK, let projectURL = panel.url else { return }
+
+            do {
+                let loadedProject = try projectPersistenceService.loadProject(from: projectURL)
+                try applyLoadedProject(loadedProject)
+
+                presentStatusAlert(
+                    title: "Project Loaded",
+                    message: "Cue project loaded successfully."
+                )
+            } catch {
+                presentStatusAlert(
+                    title: "Load Failed",
+                    message: error.localizedDescription
+                )
+            }
+        }
+    }
+
+    private func applyLoadedProject(_ loadedProject: LoadedCueProject) throws {
+        var manualGrouping = ManualGrouping()
+        manualGrouping.associations = loadedProject.metadata.manualGroupingAssociations
+
+        let content = try readTextFileContent(at: loadedProject.cueFileURL)
+        let lines = content.components(separatedBy: .newlines)
+        let result = parsingService.parseWithAllLayers(
+            from: lines,
+            manualGrouping: manualGrouping,
+            skipCatalogExtraction: loadedProject.metadata.skipCatalogExtraction
+        )
+        let resultWithComposers = applyingComposerAssignments(
+            loadedProject.metadata.composerAssignments,
+            to: result
+        )
+
+        withAnimation {
+            parsingResult = resultWithComposers
+            originalFileURL = loadedProject.cueFileURL
+            selectedLayer = .layer4
+            isFileLoaded = true
+            selectedEventIDs = []
+            filterText = ""
+            sortField = .catalogID
+            sortAscending = true
+            sortOrder = []
+
+            replaceUnderscoresWithSpaces = loadedProject.metadata.replaceUnderscoresWithSpaces
+            skipCatalogExtraction = loadedProject.metadata.skipCatalogExtraction
+        }
+    }
+
+    private func makeComposerAssignments(from result: CueParsingResult) -> [String: String] {
+        var assignments: [String: String] = [:]
+        for event in result.layer4 where !event.composer.isEmpty {
+            let key = ComposerFetchingService.composerAssignmentKey(
+                catalogID: event.catalogID,
+                title: event.title
+            )
+            assignments[key] = event.composer
+        }
+        return assignments
+    }
+
+    private func applyingComposerAssignments(
+        _ assignments: [String: String],
+        to result: CueParsingResult
+    ) -> CueParsingResult {
+        guard !assignments.isEmpty else { return result }
+
+        func apply(to events: [CueEvent]) -> [CueEvent] {
+            events.map { event in
+                var updated = event
+                let key = ComposerFetchingService.composerAssignmentKey(
+                    catalogID: event.catalogID,
+                    title: event.title
+                )
+                if let composer = assignments[key] {
+                    updated.composer = composer
+                }
+                return updated
+            }
+        }
+
+        return CueParsingResult(
+            layer1: apply(to: result.layer1),
+            layer2: apply(to: result.layer2),
+            layer3: apply(to: result.layer3),
+            layer4: apply(to: result.layer4),
+            manualGrouping: result.manualGrouping
+        )
+    }
+
+    private func presentStatusAlert(title: String, message: String) {
+        statusAlertTitle = title
+        statusAlertMessage = message
+        showingStatusAlert = true
     }
     
     // MARK: - Discard Functionality
@@ -1071,147 +1149,6 @@ struct CueEventDetailView: View {
             
             Spacer()
         }
-    }
-}
-
-// MARK: - Import Options Modal View
-
-struct ImportOptionsModalView: View {
-    @Binding var replaceUnderscoresWithSpaces: Bool
-    @Binding var skipCatalogExtraction: Bool
-    let onApply: () -> Void
-    let onSkip: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 24) {
-            // Icon
-            Image(systemName: "gear.badge")
-                .font(.system(size: 48))
-                .foregroundColor(.accentColor)
-            
-            // Title
-            Text("Import Options")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            // Description
-            Text("Configure how your cue file should be processed before importing.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            
-            // Options
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Toggle("", isOn: $replaceUnderscoresWithSpaces)
-                        .toggleStyle(SwitchToggleStyle())
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Replace underscores with spaces in track titles")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Converts underscores (_) to spaces in both catalog IDs and titles. For example: 'Song_Title_Version' becomes 'Song Title Version'.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    
-                    Spacer()
-                }
-                .padding()
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(8)
-                
-                HStack {
-                    Toggle("", isOn: $skipCatalogExtraction)
-                        .toggleStyle(SwitchToggleStyle())
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Skip catalog ID extraction")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Use the full clip name as the catalog ID instead of extracting a prefix. Channel suffixes (.L, .R, .A1) and track numbers are still removed, but the complete cleaned name is used as the catalog ID.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    
-                    Spacer()
-                }
-                .padding()
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(8)
-            }
-            
-            // Buttons
-            HStack(spacing: 12) {
-                Button("Skip") {
-                    onSkip()
-                }
-                .buttonStyle(.bordered)
-                .keyboardShortcut(.escape)
-                
-                Button("Apply Options") {
-                    onApply()
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(30)
-        .frame(width: 500, height: 450)
-        .background(Color(NSColor.windowBackgroundColor))
-        .cornerRadius(12)
-    }
-}
-
-// MARK: - Composer Modal View
-
-struct ComposerModalView: View {
-    let onSelectFolder: () -> Void
-    let onLater: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            // Icon
-            Image(systemName: "music.note.list")
-                .font(.system(size: 48))
-                .foregroundColor(.accentColor)
-            
-            // Title
-            Text("Composer Information")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            // Message
-            Text("Do you have your former audio files in a folder? Vaux can try to extract the composers for you.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-            
-            // Buttons
-            HStack(spacing: 12) {
-                Button("Later") {
-                    onLater()
-                }
-                .buttonStyle(.bordered)
-                .keyboardShortcut(.escape)
-                
-                Button("Select Folder") {
-                    onSelectFolder()
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(30)
-        .frame(width: 400, height: 250)
-        .background(Color(NSColor.windowBackgroundColor))
-        .cornerRadius(12)
     }
 }
 
