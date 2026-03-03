@@ -77,6 +77,9 @@ struct CueFileHelperView: View {
     @State private var selectedEventIDs: Set<UUID> = []
     @State private var isPinned = false
     @State private var showingManualGroupingModal = false
+    @State private var showingSessionRestoreDialog = false
+    @State private var pendingFileURLForSessionPrompt: URL?
+    @State private var pendingAutosavedSession: CueAutosavedSession?
     @AppStorage("replaceUnderscoresWithSpaces") private var replaceUnderscoresWithSpaces = true
     @AppStorage("skipCatalogExtraction") private var skipCatalogExtraction = false
     @State private var showingStatusAlert = false
@@ -160,12 +163,27 @@ struct CueFileHelperView: View {
                     onApply: { updatedResult in
                         parsingResult = updatedResult
                         showingManualGroupingModal = false
+                        autoSaveCurrentSession(using: updatedResult)
                     },
                     onCancel: {
                         showingManualGroupingModal = false
                     }
                 )
             }
+        }
+        .confirmationDialog(
+            "Previous Session Found",
+            isPresented: $showingSessionRestoreDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                deletePendingAutosavedSessionAndParseFresh()
+            }
+            Button("Continue") {
+                continueWithPendingAutosavedSession()
+            }
+        } message: {
+            Text("We found a previous session of this document. Would you like to continue it?")
         }
         .alert(statusAlertTitle, isPresented: $showingStatusAlert) {
             Button("OK", role: .cancel) { }
@@ -622,22 +640,83 @@ struct CueFileHelperView: View {
     }
     
     private func parseFile(at url: URL) {
-        originalFileURL = url
-        
+        do {
+            if let autosavedSession = try projectPersistenceService.loadAutosavedSession(for: url) {
+                pendingFileURLForSessionPrompt = url
+                pendingAutosavedSession = autosavedSession
+                showingSessionRestoreDialog = true
+                return
+            }
+
+            parseFreshFile(at: url)
+        } catch {
+            print("Error loading autosaved session: \(error)")
+            parseFreshFile(at: url)
+        }
+    }
+
+    private func parseFreshFile(at url: URL) {
         do {
             let content = try readTextFileContent(at: url)
             let lines = content.components(separatedBy: .newlines)
-            
             let result = parsingService.parseWithAllLayers(from: lines, skipCatalogExtraction: skipCatalogExtraction)
-            
-            withAnimation {
-                parsingResult = result
-                selectedLayer = .layer4  // Start with final layer
-                isFileLoaded = true
-                selectedEventIDs = [] // Clear selection when loading new file
-            }
+            applyLoadedResult(result, for: url)
         } catch {
             print("Error reading file: \(error)")
+        }
+    }
+
+    private func continueWithPendingAutosavedSession() {
+        guard
+            let fileURL = pendingFileURLForSessionPrompt,
+            let autosavedSession = pendingAutosavedSession
+        else {
+            return
+        }
+
+        do {
+            let loadedProject = LoadedCueProject(
+                cueFileURL: fileURL,
+                metadata: CueProjectMetadata(
+                    version: autosavedSession.version,
+                    originalFileName: fileURL.lastPathComponent,
+                    replaceUnderscoresWithSpaces: autosavedSession.replaceUnderscoresWithSpaces,
+                    skipCatalogExtraction: autosavedSession.skipCatalogExtraction,
+                    manualGroupingAssociations: autosavedSession.manualGroupingAssociations,
+                    composerAssignments: autosavedSession.composerAssignments
+                )
+            )
+            try applyLoadedProject(loadedProject)
+        } catch {
+            print("Error restoring autosaved session: \(error)")
+            parseFreshFile(at: fileURL)
+        }
+
+        pendingFileURLForSessionPrompt = nil
+        pendingAutosavedSession = nil
+    }
+
+    private func deletePendingAutosavedSessionAndParseFresh() {
+        guard let fileURL = pendingFileURLForSessionPrompt else { return }
+
+        do {
+            try projectPersistenceService.deleteAutosavedSession(for: fileURL)
+        } catch {
+            print("Error deleting autosaved session: \(error)")
+        }
+
+        pendingFileURLForSessionPrompt = nil
+        pendingAutosavedSession = nil
+        parseFreshFile(at: fileURL)
+    }
+
+    private func applyLoadedResult(_ result: CueParsingResult, for fileURL: URL) {
+        withAnimation {
+            parsingResult = result
+            originalFileURL = fileURL
+            selectedLayer = .layer4  // Start with final layer
+            isFileLoaded = true
+            selectedEventIDs = []
         }
     }
 
@@ -743,13 +822,16 @@ struct CueFileHelperView: View {
             
             DispatchQueue.main.async {
                 // Update layer 4 with composer information
-                parsingResult = CueParsingResult(
+                let updatedResult = CueParsingResult(
                     layer1: result.layer1,
                     layer2: result.layer2,
                     layer3: result.layer3,
-                    layer4: updatedEvents
+                    layer4: updatedEvents,
+                    manualGrouping: result.manualGrouping
                 )
+                parsingResult = updatedResult
                 processingProgress = nil
+                autoSaveCurrentSession(using: updatedResult)
             }
         }
     }
@@ -1015,6 +1097,24 @@ struct CueFileHelperView: View {
         statusAlertTitle = title
         statusAlertMessage = message
         showingStatusAlert = true
+    }
+
+    private func autoSaveCurrentSession(using result: CueParsingResult? = nil) {
+        guard let sourceFileURL = originalFileURL else { return }
+        let currentResult = result ?? parsingResult
+        guard let currentResult else { return }
+
+        do {
+            try projectPersistenceService.saveAutosavedSession(
+                for: sourceFileURL,
+                replaceUnderscoresWithSpaces: replaceUnderscoresWithSpaces,
+                skipCatalogExtraction: skipCatalogExtraction,
+                manualGroupingAssociations: currentResult.manualGrouping.associations,
+                composerAssignments: makeComposerAssignments(from: currentResult)
+            )
+        } catch {
+            print("Error autosaving session: \(error)")
+        }
     }
     
     // MARK: - Discard Functionality

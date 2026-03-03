@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CryptoKit
 
 struct CueProjectMetadata: Codable {
     let version: Int
@@ -56,9 +57,21 @@ struct LoadedCueProject {
     let metadata: CueProjectMetadata
 }
 
+struct CueAutosavedSession: Codable {
+    let version: Int
+    let cueFilePath: String
+    let replaceUnderscoresWithSpaces: Bool
+    let skipCatalogExtraction: Bool
+    let manualGroupingAssociations: [String: String]
+    let composerAssignments: [String: String]
+    let lastUpdatedAt: Date
+}
+
 final class CueProjectPersistenceService {
     private let metadataFileName = "project.json"
     private let projectVersion = 2
+    private let autosaveDirectoryName = "WAUXAutosaveSessions"
+    private let autosaveVersion = 1
 
     func saveProject(
         at projectURL: URL,
@@ -114,6 +127,66 @@ final class CueProjectPersistenceService {
         }
 
         return LoadedCueProject(cueFileURL: cueFileURL, metadata: metadata)
+    }
+
+    func saveAutosavedSession(
+        for cueFileURL: URL,
+        replaceUnderscoresWithSpaces: Bool,
+        skipCatalogExtraction: Bool,
+        manualGroupingAssociations: [String: String],
+        composerAssignments: [String: String]
+    ) throws {
+        let session = CueAutosavedSession(
+            version: autosaveVersion,
+            cueFilePath: cueFileURL.standardizedFileURL.path,
+            replaceUnderscoresWithSpaces: replaceUnderscoresWithSpaces,
+            skipCatalogExtraction: skipCatalogExtraction,
+            manualGroupingAssociations: manualGroupingAssociations,
+            composerAssignments: composerAssignments,
+            lastUpdatedAt: Date()
+        )
+
+        let fileManager = FileManager.default
+        let directoryURL = autosaveDirectoryURL()
+        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode(session)
+        try data.write(to: autosaveFileURL(for: cueFileURL), options: .atomic)
+    }
+
+    func loadAutosavedSession(for cueFileURL: URL) throws -> CueAutosavedSession? {
+        let sessionURL = autosaveFileURL(for: cueFileURL)
+        guard FileManager.default.fileExists(atPath: sessionURL.path) else {
+            return nil
+        }
+
+        let data = try Data(contentsOf: sessionURL)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let session = try decoder.decode(CueAutosavedSession.self, from: data)
+        return session
+    }
+
+    func deleteAutosavedSession(for cueFileURL: URL) throws {
+        let sessionURL = autosaveFileURL(for: cueFileURL)
+        if FileManager.default.fileExists(atPath: sessionURL.path) {
+            try FileManager.default.removeItem(at: sessionURL)
+        }
+    }
+
+    private func autosaveDirectoryURL() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent(autosaveDirectoryName, isDirectory: true)
+    }
+
+    private func autosaveFileURL(for cueFileURL: URL) -> URL {
+        let normalizedPath = cueFileURL.standardizedFileURL.path
+        let digest = SHA256.hash(data: Data(normalizedPath.utf8))
+        let identifier = digest.map { String(format: "%02x", $0) }.joined()
+        return autosaveDirectoryURL().appendingPathComponent("\(identifier).json")
     }
 }
 
