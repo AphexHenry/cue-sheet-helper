@@ -58,6 +58,21 @@ class CueFileParsingService {
     
     // MARK: - Utility Functions
     
+    /// Returns true when catalog IDs are empty or whitespace-only.
+    private func isBlankCatalogID(_ catalogID: String) -> Bool {
+        catalogID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    /// Build a stable internal grouping key.
+    /// For blank catalog IDs, we fallback to title so different titles stay separated.
+    private func groupingKey(catalogID: String, title: String) -> String {
+        if isBlankCatalogID(catalogID) {
+            let normalizedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            return "__blank_catalog__\(normalizedTitle)"
+        }
+        return catalogID
+    }
+    
     /// Parse timecode format (HH:MM:SS:FF) to total seconds
     private func parseTimecode(_ timecode: String) -> Int {
         let withoutFrames = String(timecode.dropLast(3))
@@ -385,7 +400,7 @@ class CueFileParsingService {
             if manualGrouping.hasManualAssociation(for: event.catalogID) {
                 return manualGrouping.getGroupID(for: event.catalogID)!
             }
-            return event.catalogID
+            return groupingKey(catalogID: event.catalogID, title: event.title)
         }
         
         for groupID in eventsByGroup.keys.sorted() {
@@ -434,8 +449,11 @@ class CueFileParsingService {
                     }
                 }
                 
-                // Use the group ID as catalog ID so downstream layers see a unified entry
-                mergedEvent.catalogID = groupID
+                // Only overwrite catalog ID for explicit manual grouping.
+                // For blank-catalog fallback keys, keep the original catalog ID unchanged.
+                if manualGrouping.hasManualAssociation(for: mergedEvent.catalogID) {
+                    mergedEvent.catalogID = groupID
+                }
                 
                 let durationSeconds = maxEnd - minStart
                 mergedEvent.duration = formatDuration(durationSeconds)
@@ -474,11 +492,14 @@ class CueFileParsingService {
             
             // Use manual grouping to determine the group ID for this event
             let groupID: String
+            let resolvedCatalogID: String
             if manualGrouping.hasManualAssociation(for: event.catalogID) {
                 groupID = manualGrouping.getGroupID(for: event.catalogID)!
+                resolvedCatalogID = groupID
                 print("      🔗 Using manual grouping: \(event.catalogID) → \(groupID)")
             } else {
-                groupID = event.catalogID
+                groupID = groupingKey(catalogID: event.catalogID, title: event.title)
+                resolvedCatalogID = event.catalogID
             }
             
             if var existing = aggregated[groupID] {
@@ -497,7 +518,7 @@ class CueFileParsingService {
             } else {
                 // First occurrence
                 var newEvent = event
-                newEvent.catalogID = groupID  // Update the catalog ID to the group ID
+                newEvent.catalogID = resolvedCatalogID
                 newEvent.duration = formatDuration(eventDuration)
                 aggregated[groupID] = (newEvent, eventDuration)
                 print("      ✨ New entry: \(groupID) - \(newEvent.duration)")

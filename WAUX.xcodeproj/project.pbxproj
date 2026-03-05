@@ -425,7 +425,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 0.5;
+				MARKETING_VERSION = 0.6;
 				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -458,7 +458,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 0.5;
+				MARKETING_VERSION = 0.6;
 				MODULE_CACHE_DIR = "$(PROJECT_TEMP_DIR)/ModuleCache";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vaux.cuesheet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
